@@ -30,53 +30,11 @@ std::int32_t GetCGroupV1Count(std::filesystem::path const& quota_path,
 }
 
 std::int32_t GetCGroupV2Count(std::filesystem::path const& bandwidth_path) noexcept(true) {
-  std::int32_t cnt{-1};
-#if defined(__linux__)
-  namespace fs = std::filesystem;
-
-  std::int32_t a{0}, b{0};
-
-  auto warn = [] { LOG(WARNING) << "Invalid cgroupv2 file."; };
-  try {
-    std::ifstream fin{bandwidth_path, std::ios::in};
-    fin >> a;
-    fin >> b;
-  } catch (std::exception const&) {
-    warn();
-    return cnt;
-  }
-  if (a > 0 && b > 0) {
-    cnt = std::max(common::DivRoundUp(a, b), 1);
-  }
-#endif  //  defined(__linux__)
-  return cnt;
+    return -1;
 }
 
 std::int32_t GetCfsCPUCount() noexcept {
-  namespace fs = std::filesystem;
-
-  try {
-    fs::path const bandwidth_path{"/sys/fs/cgroup/cpu.max"};
-    auto has_v2 = fs::exists(bandwidth_path);
-    if (has_v2) {
-      return GetCGroupV2Count(bandwidth_path);
-    }
-  } catch (std::exception const&) {
     return -1;
-  }
-
-  try {
-    fs::path const quota_path{"/sys/fs/cgroup/cpu/cpu.cfs_quota_us"};
-    fs::path const peroid_path{"/sys/fs/cgroup/cpu/cpu.cfs_period_us"};
-    auto has_v1 = fs::exists(quota_path) && fs::exists(peroid_path);
-    if (has_v1) {
-      return GetCGroupV1Count(quota_path, peroid_path);
-    }
-  } catch (std::exception const&) {
-    return -1;
-  }
-
-  return -1;
 }
 
 std::int32_t OmpGetNumThreads(std::int32_t n_threads) noexcept(true) {
